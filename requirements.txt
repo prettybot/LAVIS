@@ -28,3 +28,4 @@ webdataset
 wheel
 fastapi
 uvicorn
+pillow

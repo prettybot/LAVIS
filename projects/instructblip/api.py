@@ -1,26 +1,26 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, UploadFile, Form
+from typing import Optional
 import uvicorn, json, datetime
 from lavis.models import load_model_and_preprocess
 import torch
+from io import BytesIO
+from PIL import Image
 
 app = FastAPI()
 
 @app.post("/")
-async def generate_response(request: Request):
-    global model, tokenizer
-    json_post_raw = await request.json()
-    json_post = json.dumps(json_post_raw)
-    json_post_list = json.loads(json_post)
-    image = json_post_list.get("image")
-    prompt = json_post_list.get("prompt")
-    min_len = json_post_list.get("min_len", 1)
-    max_len = json_post_list.get("max_len", 250)
-    decoding_method = json_post_list.get("decoding_method", "Beam search")
-    top_p = json_post_list.get("top_p", 0.9)
-    beam_size = json_post_list.get("beam_size", 5)
-    len_penalty = json_post_list.get("len_penalty", 1)
-    repetition_penalty = json_post_list.get("repetition_penalty", 1)
-    model_type = json_post_list.get("model_type", "vicuna7b")
+async def process_data(
+    image: UploadFile = File(...), 
+    prompt: str = Form(...),
+    min_len: Optional[int] = Form(1),
+    max_len: Optional[int] = Form(250),
+    decoding_method: Optional[str] = Form("Beam search"),
+    top_p: Optional[float] = Form(0.9),
+    beam_size: Optional[int] = Form(5),
+    len_penalty: Optional[int] = Form(1),
+    repetition_penalty: Optional[int] = Form(1),
+    model_type: Optional[str] = Form("vicuna7b")
+):
     if model_type not in ["vicuna7b", "vicuna13b"]:
         return {"error": "model_type must be vicuna7b or vicuna13b"}
     if decoding_method not in ["Beam search", "Nucleus sampling"]:
@@ -34,7 +34,8 @@ async def generate_response(request: Request):
         is_eval=True,
         device=device,
     )
-    image_processed = vis_processors["eval"](image).unsqueeze(0).to(device)
+    img = Image.open(BytesIO(image.read())).convert('RGB')
+    image_processed = vis_processors["eval"](img).unsqueeze(0).to(device)
     samples = {
         "image": image_processed,
         "prompt": prompt,
