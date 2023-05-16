@@ -22,7 +22,7 @@ model:
   num_query_token: 32
 
   # path to Vicuna checkpoint
-  llm_model: "/root/models/vicuna-13b-1.1"
+  llm_model: "/app/models/vicuna-13b-1.1"
 
   # generation configs
   prompt: ""
