@@ -30,4 +30,5 @@ fastapi
 uvicorn
 pillow
 lit
-lavis.*
+-e .
+lavis[all]
